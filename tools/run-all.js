@@ -141,7 +141,8 @@ class Runner {
       runLog.log("Started proxy.",  { arrow: true });
     }
 
-    self._startMongoAsync();
+    var unblockAppRunner = self.appRunner.makeBeforeStartPromise();
+    self._startMongoAsync().then(unblockAppRunner);
 
     if (! self.stopped) {
       self.updater.start();
@@ -198,17 +199,13 @@ class Runner {
     // foo" and then print the error.
   }
 
-  _startMongoAsync() {
+  async _startMongoAsync() {
     var self = this;
     if (! self.stopped && self.mongoRunner) {
-      var resolve = self.appRunner.makeBeforeStartPromise();
-      Fiber(function () {
-        self.mongoRunner.start();
-        if (! self.stopped && ! self.quiet) {
-          runLog.log("Started MongoDB.",  { arrow: true });
-        }
-        resolve();
-      }).run();
+      self.mongoRunner.start();
+      if (! self.stopped && ! self.quiet) {
+        runLog.log("Started MongoDB.", { arrow: true });
+      }
     }
   }
 
